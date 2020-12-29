@@ -30,6 +30,7 @@ def start_screen():
 
     screen.fill(pygame.Color(0, 100, 0))
     ButtonsOnStart('button1.png', 500, 200)
+    ButtonsOnStart('button2.png', 500, 300)
 
 
 class SpriteGroup(pygame.sprite.Group):
@@ -50,7 +51,7 @@ class Sprite(pygame.sprite.Sprite):
         pass
 
 
-class ButtonsOnStart(Sprite): #спрайт кнопок на начальном экране
+class ButtonsOnStart(Sprite):
     def __init__(self, photo, x, y):
         super().__init__(sprite_group)
         self.image = load_image(photo)
@@ -60,14 +61,27 @@ class ButtonsOnStart(Sprite): #спрайт кнопок на начальном
         global start_running
         if 500 <= x <= 649 and 200 <= y <= 262:
             start_running = False
+            Main(0, -10)
+        elif 500 <= x <= 649 and 300 <= y <= 362:
+            print('stan jihyo')
             
     
 class Main(Sprite):
     def __init__(self, x, y):
         super().__init__(sprite_group)
-        print(3)
         self.image = load_image('main_pic.png')
         self.rect = self.image.get_rect().move(x, y)
+        ButtonsOnMain('10chip.png', 1085, 103)
+        ButtonsOnMain('50chip.png', 1085, 203)
+        ButtonsOnMain('100chip.png', 1085, 303)
+        ButtonsOnMain('500chip.png', 1085, 403)
+
+
+class ButtonsOnMain(Sprite):
+    def __init__(self, photo, pos_x, pos_y):
+        super().__init__(button_group)
+        self.image = load_image(photo)
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
 
 pygame.init()
 screen_size = (1200, 800)
@@ -77,6 +91,7 @@ FPS = 50
 running = True
 start_running = True
 sprite_group = SpriteGroup()
+button_group = SpriteGroup()
 
 while start_running:
     start_screen()
@@ -89,12 +104,13 @@ while start_running:
     sprite_group.draw(screen)
     clock.tick(FPS)
     pygame.display.flip()
-Main(0, 0)
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     sprite_group.draw(screen)
+    button_group.draw(screen)
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()
