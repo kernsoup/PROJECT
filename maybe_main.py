@@ -75,6 +75,8 @@ class Main(Sprite):
         ButtonsOnMain('50chip.png', 1085, 203)
         ButtonsOnMain('100chip.png', 1085, 303)
         ButtonsOnMain('500chip.png', 1085, 403)
+        ButtonsOnMain('deal_btn.png', 325, 675)
+        ButtonsOnMain('card_back.png', 895, 102)
 
 
 class ButtonsOnMain(Sprite):
@@ -83,6 +85,12 @@ class ButtonsOnMain(Sprite):
         self.image = load_image(photo)
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
+
+def click(x, y):
+    if 325 <= x <= 444 and 675 <= y <= 794:
+        Play()
+
+        
 pygame.init()
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
@@ -109,6 +117,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            click(*event.pos)
     sprite_group.draw(screen)
     button_group.draw(screen)
     clock.tick(FPS)
