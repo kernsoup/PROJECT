@@ -1,12 +1,18 @@
 import pygame
+from random import shuffle
 import os
 import sys
 
 
 chips = []
-def load_image(name, color_key=None):
-    fullname = os.path.join('bj_pics', name)
+def load_image(name, *folder, color_key=None):
+    if folder == ():
+        folder = 'bj_pics'
+    else:
+        folder = folder[0]
+    fullname = os.path.join(folder, name)
     try:
+        #print(fullname, folder)
         image = pygame.image.load(fullname)
     except pygame.error as message:
         print('Не удаётся загрузить:', name)
@@ -94,15 +100,51 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
+    global lst
     if 325 <= x <= 444 and 675 <= y <= 794:
-        Play()
+        lst = os.listdir('cards')
+        shuffle(lst)
+        Card([-10, 6])
+
+
+class Card(Sprite): #класс карт, возможно и самой игры
+    def __init__(self, speed):
+        super().__init__(sprite_group)
+        self.card_back_x = 895 #изображение карты на колоде
+        self.card_back_y = 102
+        self.image = load_image('card_back.png')
+        self.speed = speed
+        self.rect = self.image.get_rect().move(self.card_back_x, self.card_back_y)
+
+    def update(self):
+        self.rect = self.rect.move(*self.speed)
+        if self.rect.top == 402 and COUNTER == 0:
+            self.change() #если удовлетворяет условиям, запускается следующая карта
+            Card([-10, 7])
+        elif self.speed[1] == 7 and self.rect.top == 403:
+            self.change()
+            Card([-12, 1])
+        elif self.speed[0] == -12 and self.rect.left < 402:
+            self.change()
+            self.main_part()
+
+    def change(self):
+        global COUNTER
+        self.speed = [0, 0] #переворачивание карты
+        self.image = load_image(lst[COUNTER - 1], 'cards')
+        self.pic_rect = self.image.get_rect().move(self.rect.left, self.rect.top)
+        COUNTER += 1
+    
+    def main_part(self):
+        pass #предварительно функция для начала либо самой игры
 
 
 pygame.init()
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
-FPS = 50
+FPS = 60
+COUNTER = 0 #счетчик карт на столе, не в колоде
 running = True
 start_running = True
 sprite_group = SpriteGroup()
@@ -128,6 +170,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and motion:
+            print(event.pos, bet)
             if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
                 if index == 0:
                     bet += 10
@@ -141,7 +184,7 @@ while running:
             chips[index][3].top = chips[index][1]
             chips[index][3].left = chips[index][0]
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # click(*event.pos)
+            click(*event.pos)
             for chip in chips:
                 if chip[0] <= event.pos[0] <= chip[0] + chip[2][0] and \
                         chip[1] <= event.pos[1] <= chip[1] + chip[2][1]:
@@ -152,6 +195,7 @@ while running:
         if event.type == pygame.MOUSEMOTION and motion:
             chips[index][3].top += event.rel[1]
             chips[index][3].left += event.rel[0]
+    sprite_group.update()
     sprite_group.draw(screen)
     button_group.draw(screen)
     clock.tick(FPS)
