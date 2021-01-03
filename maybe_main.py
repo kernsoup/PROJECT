@@ -40,6 +40,14 @@ def start_screen():
     ButtonsOnStart('button2.png', 500, 300)
 
 
+def definding_all_the_counters():
+    global WE_PLAY, COUNTER
+    WE_PLAY = False #счетчик идет ли игра
+    COUNTER = 0 #счетчик карт на столе, не в колоде
+    diler_counter = diler_points = player_counter = player_points = 0
+    #дилер и плеер каунтеры - счетчики количества карт
+
+
 class SpriteGroup(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
@@ -84,6 +92,8 @@ class Main(Sprite):
         ButtonsOnMain('500chip.png', 1085, 403)
         ButtonsOnMain('deal_btn.png', 325, 675)
         ButtonsOnMain('card_back.png', 895, 102)
+        ButtonsOnMain('hit_btn.png', 790, 675)
+        ButtonsOnMain('stand_btn.png', 950, 650)
 
 
 class ButtonsOnMain(Sprite):
@@ -100,11 +110,15 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst
-    if 325 <= x <= 444 and 675 <= y <= 794:
+    global lst, WE_PLAY
+    if 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
         lst = os.listdir('cards')
         shuffle(lst)
         Card([-10, 6])
+    elif 790 <= x <= 910 and 675 <= y <= 795 and WE_PLAY:
+        Card(player_speeds[player_counter]).hit()
+    elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
+        print('stand') #если игрок нажимает на stand
 
 
 class Card(Sprite): #класс карт, возможно и самой игры
@@ -117,6 +131,7 @@ class Card(Sprite): #класс карт, возможно и самой игр�
         self.rect = self.image.get_rect().move(self.card_back_x, self.card_back_y)
 
     def update(self):
+        global WE_PLAY, player_counter, diler_counter
         self.rect = self.rect.move(*self.speed)
         if self.rect.top == 402 and COUNTER == 0:
             self.change() #если удовлетворяет условиям, запускается следующая карта
@@ -126,7 +141,9 @@ class Card(Sprite): #класс карт, возможно и самой игр�
             Card([-12, 1])
         elif self.speed[0] == -12 and self.rect.left < 402:
             self.change()
-            self.main_part()
+            player_counter = 2
+            diler_counter = 1
+            WE_PLAY = True
 
     def change(self):
         global COUNTER
@@ -135,8 +152,8 @@ class Card(Sprite): #класс карт, возможно и самой игр�
         self.pic_rect = self.image.get_rect().move(self.rect.left, self.rect.top)
         COUNTER += 1
     
-    def main_part(self):
-        pass #предварительно функция для начала либо самой игры
+    def hit(self):
+        print(5)
 
 
 pygame.init()
@@ -144,12 +161,14 @@ screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 FPS = 60
-COUNTER = 0 #счетчик карт на столе, не в колоде
+definding_all_the_counters() #функция, в которой определяются все переменные, используемые в процессе игры
 running = True
 start_running = True
 sprite_group = SpriteGroup()
 button_group = SpriteGroup()
 motion = False  # показатель движения фишки
+diler_speeds = [[-12, 1]] #скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
+player_speeds = [(-10, 6), [-10, 7], [-4, 0]]
 index = None  # номер фишки
 bet = 0  # ставка игрока
 
