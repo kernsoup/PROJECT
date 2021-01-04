@@ -118,7 +118,7 @@ def click(x, y):
     elif 790 <= x <= 910 and 675 <= y <= 795 and WE_PLAY:
         Card(player_speeds[player_counter]).hit()
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
-        print('stand') #если игрок нажимает на stand
+        Card(diler_speeds[diler_counter]).hit()
 
 
 class Card(Sprite): #класс карт, возможно и самой игры
@@ -130,30 +130,48 @@ class Card(Sprite): #класс карт, возможно и самой игр�
         self.speed = speed
         self.rect = self.image.get_rect().move(self.card_back_x, self.card_back_y)
 
-    def update(self):
-        global WE_PLAY, player_counter, diler_counter
+    def update(self, *args):
+        global WE_PLAY, player_counter, diler_counter, hit_or_stand, condition
+        hit_or_stand = args[0]
+        if type(args[-1]) == int:
+            condition = args[-1]
+            print(condition)
         self.rect = self.rect.move(*self.speed)
-        if self.rect.top == 402 and COUNTER == 0:
+        if self.rect.top == 402 and COUNTER == 0 and hit_or_stand == None:
             self.change() #если удовлетворяет условиям, запускается следующая карта
             Card([-10, 7])
-        elif self.speed[1] == 7 and self.rect.top == 403:
+        elif self.speed[1] == 7 and self.rect.top == 403 and hit_or_stand == None:
             self.change()
             Card([-12, 1])
-        elif self.speed[0] == -12 and self.rect.left < 402:
+        elif self.speed[0] == -12 and self.rect.left < 402 and hit_or_stand == None:
             self.change()
             player_counter = 2
             diler_counter = 1
             WE_PLAY = True
+        elif hit_or_stand and condition + 50 > self.rect.left > condition and self.rect.top >= 400:
+            hit_or_stand = None
+            self.change()
+
 
     def change(self):
         global COUNTER
         self.speed = [0, 0] #переворачивание карты
         self.image = load_image(lst[COUNTER - 1], 'cards')
-        self.pic_rect = self.image.get_rect().move(self.rect.left, self.rect.top)
+        if self.rect.left == 685:
+            self.pic_rect = self.image.get_rect().move(self.rect.left + 10, self.rect.top)
+        else:
+            self.pic_rect = self.image.get_rect().move(self.rect.left, self.rect.top)
         COUNTER += 1
     
     def hit(self):
-        print(5)
+        global player_counter
+        self.update(True, player_counter * 50 + 400)
+        player_counter += 1
+
+    def stand(self):
+        global diler_counter
+        self.update(False)
+        diler_counter += 1
 
 
 pygame.init()
@@ -168,9 +186,10 @@ sprite_group = SpriteGroup()
 button_group = SpriteGroup()
 motion = False  # показатель движения фишки
 diler_speeds = [[-12, 1]] #скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
-player_speeds = [(-10, 6), [-10, 7], [-4, 0]]
+player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6, 12]] #вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
 index = None  # номер фишки
 bet = 0  # ставка игрока
+hit_or_stand = None
 
 while start_running:
     start_screen()
@@ -214,7 +233,7 @@ while running:
         if event.type == pygame.MOUSEMOTION and motion:
             chips[index][3].top += event.rel[1]
             chips[index][3].left += event.rel[0]
-    sprite_group.update()
+    sprite_group.update(hit_or_stand)
     sprite_group.draw(screen)
     button_group.draw(screen)
     clock.tick(FPS)
