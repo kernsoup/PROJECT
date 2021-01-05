@@ -12,7 +12,6 @@ def load_image(name, *folder, color_key=None):
         folder = folder[0]
     fullname = os.path.join(folder, name)
     try:
-        #print(fullname, folder)
         image = pygame.image.load(fullname)
     except pygame.error as message:
         print('Не удаётся загрузить:', name)
@@ -40,13 +39,15 @@ def start_screen():
     ButtonsOnStart('button2.png', 500, 300)
 
 
-def definding_all_the_counters():
-    global WE_PLAY, COUNTER
+def definding_all_the_stuff():
+    global WE_PLAY, COUNTER, diler_counter, diler_points, player_counter, player_points
+    global diler_cards, player_cards, index, bet, hit_or_stand
     WE_PLAY = False #счетчик идет ли игра
     COUNTER = 0 #счетчик карт на столе, не в колоде
     diler_counter = diler_points = player_counter = player_points = 0
     #дилер и плеер каунтеры - счетчики количества карт
-
+    diler_cards = []
+    player_cards = []
 
 class SpriteGroup(pygame.sprite.Group):
     def __init__(self):
@@ -112,13 +113,51 @@ class ButtonsOnMain(Sprite):
 def click(x, y):
     global lst, WE_PLAY
     if 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
-        lst = os.listdir('cards')
-        shuffle(lst)
-        Card([-10, 6])
+        if bet == 0:
+            print('no <3')
+        else:
+            definding_all_the_stuff()
+            lst = os.listdir('cards')
+            shuffle(lst)
+            Card([-10, 6])
     elif 790 <= x <= 910 and 675 <= y <= 795 and WE_PLAY:
         Card(player_speeds[player_counter]).hit()
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
-        Card(diler_speeds[diler_counter]).hit()
+        Card(diler_speeds[diler_counter]).stand()
+
+
+def write_the_points():
+    font = pygame.font.Font(None, 50)
+    text = font.render(str(diler_points), True, (100, 255, 100))
+    text1 = font.render(str(player_points), True, (100, 255, 100))
+    screen.blit(text, (50, 100))
+    screen.blit(text1, (50, 600))
+
+
+class Game():
+    def there_are_aces(self, lst):
+        counter = 0
+        for card in lst:
+            if 'A' in card:
+                counter += 1
+            else:
+                counter += int(card.split('_')[0])
+        return counter
+
+    def lose(self):
+        global WE_PLAY
+        print('you lose')
+        WE_PLAY = False
+
+    def win(self):
+        global WE_PLAY
+        print('you win')
+        WE_PLAY = False
+
+    def push(self):
+        global WE_PLAY
+        print('it is push')
+        WE_PLAY = False
 
 
 class Card(Sprite): #класс карт, возможно и самой игры
@@ -126,37 +165,66 @@ class Card(Sprite): #класс карт, возможно и самой игр�
         super().__init__(sprite_group)
         self.card_back_x = 895 #изображение карты на колоде
         self.card_back_y = 102
+        self.stand_pressed = False
         self.image = load_image('card_back.png')
         self.speed = speed
         self.rect = self.image.get_rect().move(self.card_back_x, self.card_back_y)
 
     def update(self, *args):
-        global WE_PLAY, player_counter, diler_counter, hit_or_stand, condition
+        global WE_PLAY, player_counter, diler_counter, hit_or_stand, condition, player_cards, diler_cards
         hit_or_stand = args[0]
         if type(args[-1]) == int:
             condition = args[-1]
-            print(condition)
         self.rect = self.rect.move(*self.speed)
         if self.rect.top == 402 and COUNTER == 0 and hit_or_stand == None:
-            self.change() #если удовлетворяет условиям, запускается следующая карта
+            self.change(player_cards) #если удовлетворяет условиям, запускается следующая карта
             Card([-10, 7])
         elif self.speed[1] == 7 and self.rect.top == 403 and hit_or_stand == None:
-            self.change()
+            self.change(player_cards)
             Card([-12, 1])
         elif self.speed[0] == -12 and self.rect.left < 402 and hit_or_stand == None:
-            self.change()
+            self.change(diler_cards)
             player_counter = 2
             diler_counter = 1
             WE_PLAY = True
         elif hit_or_stand and condition + 50 > self.rect.left > condition and self.rect.top >= 400:
             hit_or_stand = None
-            self.change()
+            self.change(player_cards)
+        elif hit_or_stand == False and condition < self.rect.left < condition + 30 and self.rect.top < 200:
+            hit_or_stand = None
+            self.change(diler_cards)
 
 
-    def change(self):
-        global COUNTER
+    def change(self, cards_list):
+        global COUNTER, player_points, diler_points, player_cards, diler_cards
         self.speed = [0, 0] #переворачивание карты
         self.image = load_image(lst[COUNTER - 1], 'cards')
+        cards_list.append(lst[COUNTER - 1])
+        if cards_list == player_cards:
+            player_points += int(lst[COUNTER - 1].split('_')[0])
+            print(diler_points, player_points)
+            if 'A' in ''.join(player_cards) and player_points > 21:
+                player_points = game.there_are_aces(player_cards)
+            if player_points > 21:
+                game.lose()
+        else:
+            diler_points += int(lst[COUNTER - 1].split('_')[0])
+            print(diler_points, player_points)
+            if diler_points == 21 and player_points != 21:
+                game.lose()
+            elif 'A' in ''.join(diler_cards) and diler_points > 21:
+                diler_points = game.there_are_aces(diler_cards)
+            elif diler_points > 21:
+                game.win()
+            elif diler_points < 17 and self.stand_pressed:
+                Card(diler_speeds[diler_counter + 1]).stand()
+            elif 17 <= diler_points <= 21 and 17 <= player_points <= 21:
+                if diler_points < player_points:
+                    game.win()
+                elif diler_points > player_points:
+                    game.lose()
+                else:
+                    game.push()
         if self.rect.left == 685:
             self.pic_rect = self.image.get_rect().move(self.rect.left + 10, self.rect.top)
         else:
@@ -170,7 +238,8 @@ class Card(Sprite): #класс карт, возможно и самой игр�
 
     def stand(self):
         global diler_counter
-        self.update(False)
+        self.stand_pressed = True
+        self.update(False, diler_counter * 50 + 400)
         diler_counter += 1
 
 
@@ -179,17 +248,19 @@ screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 FPS = 60
-definding_all_the_counters() #функция, в которой определяются все переменные, используемые в процессе игры
+#definding_all_the_stuff() #функция, в которой определяются все переменные, используемые в процессе игры
 running = True
 start_running = True
 sprite_group = SpriteGroup()
 button_group = SpriteGroup()
+definding_all_the_stuff()
 motion = False  # показатель движения фишки
-diler_speeds = [[-12, 1]] #скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
-player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6, 12]] #вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
 index = None  # номер фишки
 bet = 0  # ставка игрока
 hit_or_stand = None
+diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1], [-6, 1]] #скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
+player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6, 12]] #вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
+game = Game()
 
 while start_running:
     start_screen()
@@ -203,12 +274,12 @@ while start_running:
     clock.tick(FPS)
     pygame.display.flip()
 
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and motion:
-            print(event.pos, bet)
             if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
                 if index == 0:
                     bet += 10
@@ -236,6 +307,7 @@ while running:
     sprite_group.update(hit_or_stand)
     sprite_group.draw(screen)
     button_group.draw(screen)
+    write_the_points()
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()
