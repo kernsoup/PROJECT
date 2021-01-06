@@ -134,6 +134,15 @@ def write_the_points():
     screen.blit(text1, (50, 600))
 
 
+def write_bet_and_balance():
+    global bet, balance
+    font = pygame.font.Font(None, 40)
+    new_bet = font.render(f'{bet}$', True, (100, 225, 100))
+    screen.blit(new_bet, (575, 700))
+    new_balance = font.render(f'{balance}$', True, (100, 225, 100))
+    screen.blit(new_balance, (590, 15))
+
+
 class Game():
     def there_are_aces(self, lst):
         counter = 0
@@ -145,19 +154,24 @@ class Game():
         return counter
 
     def lose(self):
-        global WE_PLAY
+        global WE_PLAY, bet
         print('you lose')
         WE_PLAY = False
+        bet = 0
 
     def win(self):
-        global WE_PLAY
+        global WE_PLAY, balance, bet
         print('you win')
         WE_PLAY = False
+        balance += bet * 2
+        bet = 0
 
     def push(self):
-        global WE_PLAY
+        global WE_PLAY, balance, bet
         print('it is push')
         WE_PLAY = False
+        balance += bet
+        bet = 0
 
 
 class Card(Sprite): #класс карт, возможно и самой игры
@@ -257,6 +271,7 @@ definding_all_the_stuff()
 motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
+balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
 hit_or_stand = None
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1], [-6, 1]] #скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
 player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6, 12]] #вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
@@ -281,14 +296,18 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and motion:
             if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
-                if index == 0:
+                if index == 0 and balance >= 10:
                     bet += 10
-                elif index == 1:
+                    balance -= 10
+                elif index == 1 and balance >= 50:
                     bet += 50
-                elif index == 2:
+                    balance -= 50
+                elif index == 2 and balance >= 100:
                     bet += 100
-                elif index == 3:
+                    balance -= 100
+                elif index == 3 and balance >= 500:
                     bet += 500
+                    balance -= 500
             motion = False
             chips[index][3].top = chips[index][1]
             chips[index][3].left = chips[index][0]
@@ -308,6 +327,7 @@ while running:
     sprite_group.draw(screen)
     button_group.draw(screen)
     write_the_points()
+    write_bet_and_balance()
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()
