@@ -2,7 +2,6 @@ import pygame
 from random import shuffle
 import os
 import sys
-import time
 
 chips = []
 
@@ -71,7 +70,7 @@ class StartScreen(Sprite):
             start_running = False
             main = Main(0, -10)
         elif 500 <= x <= 649 and 300 <= y <= 362:
-            print('stan jihyo')
+            Settings()
 
 
 class Main(Sprite):
@@ -81,12 +80,12 @@ class Main(Sprite):
         self.image = load_image('main_pic.png')
         self.rect = self.image.get_rect().move(x, y)
         boms = [ButtonsOnMain('back_btn.png', 0, 0),
+                ButtonsOnMain('card_back.png', 895, 102),
                 ButtonsOnMain('10chip.png', 1085, 103),
                 ButtonsOnMain('50chip.png', 1085, 203),
                 ButtonsOnMain('100chip.png', 1085, 303),
                 ButtonsOnMain('500chip.png', 1085, 403),
                 ButtonsOnMain('deal_btn.png', 325, 675),
-                ButtonsOnMain('card_back.png', 895, 102),
                 ButtonsOnMain('hit_btn.png', 790, 675),
                 ButtonsOnMain('stand_btn.png', 950, 650)]
 
@@ -105,7 +104,7 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms
+    global lst, WE_PLAY, you_can, main, boms, start_running
     if 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
         if bet == 0:
             print('no <3')
@@ -121,12 +120,15 @@ def click(x, y):
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
         Card(diler_speeds[diler_counter]).stand()
     elif x <= 62 and y <= 62:
+        start_running = True
         main.kill()
         for elem in boms:
             elem.kill()
         StartScreen('ss_bg.png', 0, 0)
         StartScreen('button1.png', 500, 200)
         StartScreen('button2.png', 500, 300)
+        StartScreen('button3.png', 500, 400)
+        start_main()
 
 
 def write_the_points():
@@ -274,6 +276,14 @@ class Card(Sprite):
         diler_counter += 1
 
 
+class Settings(Sprite):
+    def __init__(self):
+        global boms
+        super().__init__(sprite_group)
+        self.image = load_image('main_pic.png', 'set_pics')
+        self.rect = self.image.get_rect().move(0, 0)
+
+
 pygame.init()
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
@@ -302,60 +312,72 @@ game = Game()
 StartScreen('ss_bg.png', 0, 0)
 StartScreen('button1.png', 500, 200)
 StartScreen('button2.png', 500, 300)
+StartScreen('button3.png', 500, 400)
 
-while start_running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            start_running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            StartScreen.click(*event.pos)
-    sprite_group.draw(screen)
-    clock.tick(FPS)
-    pygame.display.flip()
+#pygame.mixer.music.load('bj_music/krutyak.mp3')
+#pygame.mixer.music.play()
+#print(pygame.mixer.music.get_volume())
 
-card_group = pygame.sprite.Group(Card([0, 0]))
+def start_main():
+    global start_running
+    while start_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                start_running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                StartScreen.click(*event.pos)
+        sprite_group.draw(screen)
+        clock.tick(FPS)
+        pygame.display.flip()
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN and motion:
-            if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
-                if index == 0 and balance >= 10:
-                    bet += 10
-                    balance -= 10
-                elif index == 1 and balance >= 50:
-                    bet += 50
-                    balance -= 50
-                elif index == 2 and balance >= 100:
-                    bet += 100
-                    balance -= 100
-                elif index == 3 and balance >= 500:
-                    bet += 500
-                    balance -= 500
-            motion = False
-            chips[index][3].top = chips[index][1]
-            chips[index][3].left = chips[index][0]
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            click(*event.pos)
-            for chip in chips:
-                if chip[0] <= event.pos[0] <= chip[0] + chip[2][0] and \
-                        chip[1] <= event.pos[1] <= chip[1] + chip[2][1]:
-                    index = chips.index(chip)  # 0 - 10, 1 - 50, 2 - 100, 3 - 500
-                    # номера в списке соответсенно фишкам
-                    # узнаем на какую фишку попал игрок
-                    motion = True  # двигаем
-        if event.type == pygame.MOUSEMOTION and motion:
-            chips[index][3].top += event.rel[1]
-            chips[index][3].left += event.rel[0]
-    card_group.update(hit_or_stand)
-    sprite_group.draw(screen)
-    button_group.draw(screen)
-    card_group.draw(screen)
-    line_group.draw(screen)
-    write_the_points()
-    write_bet_and_balance()
-    clock.tick(FPS)
-    pygame.display.flip()
-pygame.quit()
+card_group = pygame.sprite.Group(Card([500, 0]))
+
+def the_mainest():
+    global running, motion, bet, balance
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN and motion:
+                if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
+                    if index == 0 and balance >= 10:
+                        bet += 10
+                        balance -= 10
+                    elif index == 1 and balance >= 50:
+                        bet += 50
+                        balance -= 50
+                    elif index == 2 and balance >= 100:
+                        bet += 100
+                        balance -= 100
+                    elif index == 3 and balance >= 500:
+                        bet += 500
+                        balance -= 500
+                motion = False
+                chips[index][3].top = chips[index][1]
+                chips[index][3].left = chips[index][0]
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                click(*event.pos)
+                for chip in chips:
+                    if chip[0] <= event.pos[0] <= chip[0] + chip[2][0] and \
+                            chip[1] <= event.pos[1] <= chip[1] + chip[2][1]:
+                        index = chips.index(chip)  # 0 - 10, 1 - 50, 2 - 100, 3 - 500
+                        # номера в списке соответсенно фишкам
+                        # узнаем на какую фишку попал игрок
+                        motion = True  # двигаем
+            if event.type == pygame.MOUSEMOTION and motion:
+                chips[index][3].top += event.rel[1]
+                chips[index][3].left += event.rel[0]
+        card_group.update(hit_or_stand)
+        sprite_group.draw(screen)
+        button_group.draw(screen)
+        card_group.draw(screen)
+        line_group.draw(screen)
+        write_the_points()
+        write_bet_and_balance()
+        clock.tick(FPS)
+        pygame.display.flip()
+    pygame.quit()
+
+start_main()
+the_mainest()
