@@ -2,6 +2,7 @@ import pygame
 from random import shuffle
 import os
 import sys
+import pickle
 
 chips = []
 
@@ -70,6 +71,7 @@ class StartScreen(Sprite):
             start_running = False
             main = Main(0, -10)
         elif 500 <= x <= 649 and 300 <= y <= 362:
+            start_running = False
             Settings()
 
 
@@ -104,7 +106,7 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms, start_running
+    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working
     if 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
         if bet == 0:
             print('no <3')
@@ -120,10 +122,13 @@ def click(x, y):
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
         Card(diler_speeds[diler_counter]).stand()
     elif x <= 62 and y <= 62:
+        sets_working = False
         start_running = True
         main.kill()
         for elem in boms:
             elem.kill()
+        card_group.empty()
+        line_group.empty()
         StartScreen('ss_bg.png', 0, 0)
         StartScreen('button1.png', 500, 200)
         StartScreen('button2.png', 500, 300)
@@ -278,10 +283,13 @@ class Card(Sprite):
 
 class Settings(Sprite):
     def __init__(self):
-        global boms
+        global boms, sets_working
+        sets_working = True
         super().__init__(sprite_group)
         self.image = load_image('main_pic.png', 'set_pics')
         self.rect = self.image.get_rect().move(0, 0)
+        print(running, start_running)
+        ButtonsOnMain('back_btn.png', 0, 0)
 
 
 pygame.init()
@@ -301,8 +309,11 @@ motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
 balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
+with open('save.dat', 'rb') as file:
+    balance = pickle.load(file)
 hit_or_stand = None
 can_kill = False
+sets_working = False
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
                 [-6, 1]]  # скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
 player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6,
@@ -319,7 +330,7 @@ StartScreen('button3.png', 500, 400)
 #print(pygame.mixer.music.get_volume())
 
 def start_main():
-    global start_running
+    global start_running, running
     while start_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -338,6 +349,8 @@ def the_mainest():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                with open('save.dat', 'wb') as file:
+                    pickle.dump(balance, file)
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and motion:
                 if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
@@ -373,8 +386,9 @@ def the_mainest():
         button_group.draw(screen)
         card_group.draw(screen)
         line_group.draw(screen)
-        write_the_points()
-        write_bet_and_balance()
+        if not sets_working:
+            write_the_points()
+            write_bet_and_balance()
         clock.tick(FPS)
         pygame.display.flip()
     pygame.quit()
