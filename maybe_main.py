@@ -74,6 +74,9 @@ class StartScreen(Sprite):
         elif 500 <= x <= 649 and 300 <= y <= 362:
             start_running = False
             Settings()
+        elif 500 <= x <= 649 and 400 <= y <= 462:
+            start_running = False
+            Rules()
 
 
 class Main(Sprite):
@@ -107,7 +110,7 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working
+    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, rules
     if sets_working:
         if 500 <= x <= 570 and 150 <= y <= 270:
             if pygame.mixer.music.get_busy():
@@ -126,6 +129,16 @@ def click(x, y):
             StartScreen('button2.png', 500, 300)
             StartScreen('button3.png', 500, 400)
             start_main()
+    elif rules and x <= 62 and y <= 62:
+        rules = False
+        start_running = True
+        card_group.empty()
+        line_group.empty()
+        StartScreen('ss_bg.png', 0, 0)
+        StartScreen('button1.png', 500, 200)
+        StartScreen('button2.png', 500, 300)
+        StartScreen('button3.png', 500, 400)
+        start_main()
     elif 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
         if bet == 0:
             print('no <3')
@@ -321,6 +334,17 @@ class Settings(Sprite):
             ButtonsOnMain('non_checked.png', 500, 180)
 
 
+class Rules(Sprite):
+    def __init__(self):
+        global rules
+        super().__init__(sprite_group)
+        self.image = load_image('Rules.png', 'set_pics')
+        self.rect = self.image.get_rect().move(0, 0)
+        ButtonsOnMain('back_btn.png', 0, 0)
+        rules = True
+
+
+
 pygame.init()
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
@@ -338,8 +362,6 @@ motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
 balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
-with open('save.dat', 'rb') as file:
-    balance = pickle.load(file)
 hit_or_stand = None
 can_kill = False
 sets_working = False
@@ -413,7 +435,7 @@ def the_mainest():
         button_group.draw(screen)
         card_group.draw(screen)
         line_group.draw(screen)
-        if not sets_working:
+        if not sets_working and not rules:
             write_the_points()
             write_bet_and_balance()
         clock.tick(FPS)
