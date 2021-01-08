@@ -94,7 +94,8 @@ class Main(Sprite):
                 ButtonsOnMain('500chip.png', 1085, 403),
                 ButtonsOnMain('deal_btn.png', 325, 675),
                 ButtonsOnMain('hit_btn.png', 790, 675),
-                ButtonsOnMain('stand_btn.png', 950, 650)]
+                ButtonsOnMain('stand_btn.png', 950, 650),
+                ButtonsOnMain('Double.png', 845, 550)]
 
 
 class ButtonsOnMain(Sprite):
