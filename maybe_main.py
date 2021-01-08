@@ -6,6 +6,7 @@ import time
 import pickle
 
 chips = []
+rules = False
 
 def load_image(name, *folder, color_key=None):
     if folder == ():
