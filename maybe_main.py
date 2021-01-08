@@ -34,7 +34,7 @@ def terminate():
 
 def definding_all_the_stuff():
     global WE_PLAY, COUNTER, diler_counter, diler_points, player_counter, player_points
-    global diler_cards, player_cards, index, bet, hit_or_stand
+    global diler_cards, player_cards, index, bet, hit_or_stand, loses, wins, pushes
     WE_PLAY = False  # счетчик идет ли игра
     COUNTER = 0  # счетчик карт на столе, не в колоде
     diler_counter = diler_points = player_counter = player_points = 0
@@ -62,22 +62,32 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class StartScreen(Sprite):
-    def __init__(self, photo, x, y):
+    def __init__(self):
+        global start_boms
         super().__init__(sprite_group)
-        self.image = load_image(photo)
-        self.rect = self.image.get_rect().move(x, y)
+        self.image = load_image('ss_bg.png')
+        self.rect = self.image.get_rect().move(0, 0)
+        start_boms = [ButtonsOnMain('ss_bg.png', 0, 0),
+                      ButtonsOnMain('button1.png', 500, 200),
+                      ButtonsOnMain('button2.png', 500, 300),
+                      ButtonsOnMain('button3.png', 500, 400)]
 
     def click(x, y):
-        global start_running, main
+        global start_running, main, manual
         if 500 <= x <= 649 and 200 <= y <= 262:
             start_running = False
+            button_group.empty()
             main = Main(0, -10)
         elif 500 <= x <= 649 and 300 <= y <= 362:
             start_running = False
+            button_group.empty()
             Settings()
         elif 500 <= x <= 649 and 400 <= y <= 462:
             start_running = False
+            button_group.empty()
             Rules()
+            print('loses:', loses)
+            print('я сделаю кнопку там ок для статистики...')
 
 
 class Main(Sprite):
@@ -92,10 +102,10 @@ class Main(Sprite):
                 ButtonsOnMain('50chip.png', 1085, 203),
                 ButtonsOnMain('100chip.png', 1085, 303),
                 ButtonsOnMain('500chip.png', 1085, 403),
-                ButtonsOnMain('deal_btn.png', 325, 675),
+                ButtonsOnMain('deal_btn.png', 165, 650),
                 ButtonsOnMain('hit_btn.png', 790, 675),
                 ButtonsOnMain('stand_btn.png', 950, 650),
-                ButtonsOnMain('Double.png', 845, 525)]
+                ButtonsOnMain('Double.png', 325, 675)]
 
 
 class ButtonsOnMain(Sprite):
@@ -103,16 +113,16 @@ class ButtonsOnMain(Sprite):
         super().__init__(button_group)
         self.image = load_image(photo)
         self.rect = self.image.get_rect().move(pos_x, pos_y)
-        self.movable = False
+        #self.movable = False
         if photo == '10chip.png' or photo == '50chip.png' or \
                 photo == '100chip.png' or photo == '500chip.png':
-            self.movable = True
+        #    self.movable = True
             chips.append((pos_x, pos_y, self.image.get_size(), self.rect))  # начальные координаты
             # + размер для определения местоположения фишек в виде кортежа
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, rules
+    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, chips, rules
     if sets_working:
         if 500 <= x <= 570 and 150 <= y <= 270:
             if pygame.mixer.music.get_busy():
@@ -124,24 +134,15 @@ def click(x, y):
         elif x <= 62 and y <= 62:
             sets_working = False
             start_running = True
-            card_group.empty()
-            line_group.empty()
-            StartScreen('ss_bg.png', 0, 0)
-            StartScreen('button1.png', 500, 200)
-            StartScreen('button2.png', 500, 300)
-            StartScreen('button3.png', 500, 400)
+            StartScreen()
             start_main()
-    elif rules and x <= 62 and y <= 62:
-        rules = False
-        start_running = True
-        card_group.empty()
-        line_group.empty()
-        StartScreen('ss_bg.png', 0, 0)
-        StartScreen('button1.png', 500, 200)
-        StartScreen('button2.png', 500, 300)
-        StartScreen('button3.png', 500, 400)
-        start_main()
-    elif 325 <= x <= 444 and 675 <= y <= 794 and not WE_PLAY:
+    elif rules:
+        if x <= 62 and y <= 62:
+            rules = False
+            start_running = True
+            StartScreen()
+            start_main()
+    elif 165 <= x <= 284 and 650 <= y <= 769 and not WE_PLAY:
         if bet == 0:
             print('no <3')
         else:
@@ -155,19 +156,18 @@ def click(x, y):
         Card(player_speeds[player_counter]).hit()
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
         Card(diler_speeds[diler_counter]).stand()
-    elif 845 <= x <= 965 and 525 <= y <= 645 and WE_PLAY and balance - bet > 0 and player_counter == 2:
+    elif 325 <= x <= 445 and 675 <= y <= 795 and WE_PLAY and balance - bet >= 0 and player_counter == 2:
         Card(player_speeds[player_counter]).double()
     elif x <= 62 and y <= 62:
+        line_group.empty()
+        card_group.empty()
+        rules = False
+        chips = []
         start_running = True
         main.kill()
         for elem in boms:
             elem.kill()
-        card_group.empty()
-        line_group.empty()
-        StartScreen('ss_bg.png', 0, 0)
-        StartScreen('button1.png', 500, 200)
-        StartScreen('button2.png', 500, 300)
-        StartScreen('button3.png', 500, 400)
+        StartScreen()
         start_main()
 
 
@@ -189,9 +189,8 @@ def write_bet_and_balance():
 
 
 def load_the_playlist():
-    pygame.mixer.music.load('bj_music/!Ben Matthews feat. Holli Scott - No Good.mp3')
+    pygame.mixer.music.load('bj_music/at.mp3')
     pygame.mixer.music.play()
-    pygame.mixer.music.set_volume(0.1)
     for elem in os.listdir('bj_music')[1:]:
         pygame.mixer.music.queue('bj_music/' + elem)
 
@@ -207,32 +206,35 @@ class Game():
         return counter
 
     def lose(self):
-        global WE_PLAY, bet
+        global WE_PLAY, bet, loses
         image = load_image("you_lose.png")
         line = pygame.sprite.Sprite(line_group)
         line.image = image
         line.rect = line.image.get_rect().move(0, 500)
         WE_PLAY = False
+        loses += 1
         bet = 0
 
     def win(self):
-        global WE_PLAY, balance, bet
+        global WE_PLAY, balance, bet, wins
         image = load_image("you_win.png")
         line = pygame.sprite.Sprite(line_group)
         line.image = image
         line.rect = line.image.get_rect().move(0, 500)
         WE_PLAY = False
         balance += bet * 2
+        wins += 1
         bet = 0
 
     def push(self):
-        global WE_PLAY, balance, bet
+        global WE_PLAY, balance, bet, pushes
         image = load_image("push.png")
         line = pygame.sprite.Sprite(line_group)
         line.image = image
         line.rect = line.image.get_rect().move(0, 500)
         WE_PLAY = False
         balance += bet
+        pushes += 1
         bet = 0
 
 
@@ -331,15 +333,14 @@ class Card(Sprite):
         bet *= 2
 
 
-
 class Settings(Sprite):
     def __init__(self):
-        global boms, sets_working
+        global sets_working
         sets_working = True
         super().__init__(sprite_group)
+        button_group.empty()
         self.image = load_image('main_pic.png', 'set_pics')
         self.rect = self.image.get_rect().move(0, 0)
-        print(running, start_running, sets_working)
         ButtonsOnMain('back_btn.png', 0, 0)
         if pygame.mixer.music.get_busy():
             ButtonsOnMain('checked.png', 500, 180)
@@ -350,18 +351,19 @@ class Settings(Sprite):
 class Rules(Sprite):
     def __init__(self):
         global rules
+        rules = True
         super().__init__(sprite_group)
+        button_group.empty()
         self.image = load_image('Rules.png', 'set_pics')
         self.rect = self.image.get_rect().move(0, 0)
         ButtonsOnMain('back_btn.png', 0, 0)
-        rules = True
-
 
 
 pygame.init()
 pygame.display.set_caption('Блэкджек')
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
+screen2 = pygame.Surface(screen.get_size())
 clock = pygame.time.Clock()
 FPS = 60
 # definding_all_the_stuff() #функция, в которой определяются все переменные, используемые в процессе игры
@@ -376,44 +378,51 @@ motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
 balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
+wins = loses = pushes = 0
+with open('save.dat', 'rb') as file:
+    balance, wins, loses, pushes = pickle.load(file)
 hit_or_stand = None
 can_kill = False
 sets_working = False
+TRANSPARENCY = 0
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
                 [-6, 1]]  # скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
-player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6,
-                                                                                 12]]  # вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
+player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], [-6, 12]]
+       # вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
 game = Game()
-
-StartScreen('ss_bg.png', 0, 0)
-StartScreen('button1.png', 500, 200)
-StartScreen('button2.png', 500, 300)
-StartScreen('button3.png', 500, 400)
-
-load_the_playlist()
+StartScreen()
+#load_the_playlist()
 
 def start_main():
-    global start_running, running
+    global start_running, running, TRANSPARENCY, start_boms
     while start_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                with open('save.dat', 'wb') as file:
+                    pickle.dump([balance, wins, loses, pushes], file)
+                    file.close()
                 running = False
                 start_running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 StartScreen.click(*event.pos)
+        if TRANSPARENCY < 255:
+            TRANSPARENCY += 1
+        screen2.set_alpha(TRANSPARENCY)
         sprite_group.draw(screen)
+        button_group.draw(screen2)
+        screen.blit(screen2, (0, 0))
         clock.tick(FPS)
         pygame.display.flip()
 
 card_group = pygame.sprite.Group(Card([500, 0]))
 
 def the_mainest():
-    global running, motion, bet, balance
+    global running, motion, bet, balance, WE_PLAY
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 with open('save.dat', 'wb') as file:
-                    pickle.dump(balance, file)
+                    pickle.dump([balance, wins, loses, pushes], file)
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and motion:
                 if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
@@ -436,12 +445,12 @@ def the_mainest():
                 click(*event.pos)
                 for chip in chips:
                     if chip[0] <= event.pos[0] <= chip[0] + chip[2][0] and \
-                            chip[1] <= event.pos[1] <= chip[1] + chip[2][1]:
+                            chip[1] <= event.pos[1] <= chip[1] + chip[2][1] and not WE_PLAY:
                         index = chips.index(chip)  # 0 - 10, 1 - 50, 2 - 100, 3 - 500
                         # номера в списке соответсенно фишкам
                         # узнаем на какую фишку попал игрок
                         motion = True  # двигаем
-            if event.type == pygame.MOUSEMOTION and motion:
+            if event.type == pygame.MOUSEMOTION and motion and not WE_PLAY:
                 chips[index][3].top += event.rel[1]
                 chips[index][3].left += event.rel[0]
         card_group.update(hit_or_stand)
