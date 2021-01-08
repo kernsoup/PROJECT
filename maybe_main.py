@@ -95,7 +95,7 @@ class Main(Sprite):
                 ButtonsOnMain('deal_btn.png', 325, 675),
                 ButtonsOnMain('hit_btn.png', 790, 675),
                 ButtonsOnMain('stand_btn.png', 950, 650),
-                ButtonsOnMain('Double.png', 845, 550)]
+                ButtonsOnMain('Double.png', 845, 525)]
 
 
 class ButtonsOnMain(Sprite):
@@ -155,6 +155,8 @@ def click(x, y):
         Card(player_speeds[player_counter]).hit()
     elif 950 <= x <= 1070 and 650 <= y <= 770 and WE_PLAY:
         Card(diler_speeds[diler_counter]).stand()
+    elif 845 <= x <= 965 and 525 <= y <= 645 and WE_PLAY and balance - bet > 0 and player_counter == 2:
+        Card(player_speeds[player_counter]).double()
     elif x <= 62 and y <= 62:
         start_running = True
         main.kill()
@@ -187,8 +189,9 @@ def write_bet_and_balance():
 
 
 def load_the_playlist():
-    pygame.mixer.music.load('bj_music/at.mp3')
+    pygame.mixer.music.load('bj_music/!Ben Matthews feat. Holli Scott - No Good.mp3')
     pygame.mixer.music.play()
+    pygame.mixer.music.set_volume(0.1)
     for elem in os.listdir('bj_music')[1:]:
         pygame.mixer.music.queue('bj_music/' + elem)
 
@@ -320,6 +323,14 @@ class Card(Sprite):
         self.update(False, diler_counter * 50 + 400)
         diler_counter += 1
 
+    def double(self):
+        global player_counter, bet, balance
+        self.update(True, player_counter * 50 + 400)
+        player_counter += 1
+        balance -= bet
+        bet *= 2
+
+
 
 class Settings(Sprite):
     def __init__(self):
@@ -348,6 +359,7 @@ class Rules(Sprite):
 
 
 pygame.init()
+pygame.display.set_caption('Блэкджек')
 screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
