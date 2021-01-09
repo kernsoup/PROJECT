@@ -68,26 +68,34 @@ class StartScreen(Sprite):
         self.image = load_image('ss_bg.png')
         self.rect = self.image.get_rect().move(0, 0)
         start_boms = [ButtonsOnMain('ss_bg.png', 0, 0),
-                      ButtonsOnMain('button1.png', 500, 200),
-                      ButtonsOnMain('button2.png', 500, 300),
-                      ButtonsOnMain('button3.png', 500, 400)]
+                      ButtonsOnMain('button1.png', 700, 250),
+                      ButtonsOnMain('button2.png', 700, 350),
+                      ButtonsOnMain('button3.png', 700, 450)]
+        if pygame.mixer.music.get_busy():
+            start_boms.append(ButtonsOnMain('sound.png', 700, 530))
+        else:
+            start_boms.append(ButtonsOnMain('no_sound.png', 700, 530))
 
     def click(x, y):
         global start_running, main, manual
-        if 500 <= x <= 649 and 200 <= y <= 262:
+        if 700 <= x <= 878 and 250 <= y <= 316:
             start_running = False
             button_group.empty()
             main = Main(0, -10)
-        elif 500 <= x <= 649 and 300 <= y <= 362:
-            start_running = False
-            button_group.empty()
-            Settings()
-        elif 500 <= x <= 649 and 400 <= y <= 462:
+        elif 700 <= x <= 898 and 350 <= y <= 416:
             start_running = False
             button_group.empty()
             Rules()
+        elif 700 <= x <= 935 and 450 <= y <= 516:
             print('loses:', loses)
             print('я сделаю кнопку там ок для статистики...')
+        elif 700 <= x <= 750 and 530 <= y <= 580:
+            if pygame.mixer.music.get_busy():
+                ButtonsOnMain('no_sound.png', 700, 530)
+                pygame.mixer.music.stop()
+            else:
+                ButtonsOnMain('sound.png', 700, 530)
+                load_the_playlist()
 
 
 class Main(Sprite):
@@ -122,21 +130,9 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, chips, rules
-    if sets_working:
-        if 500 <= x <= 570 and 150 <= y <= 270:
-            if pygame.mixer.music.get_busy():
-                ButtonsOnMain('non_checked.png', 500, 180)
-                pygame.mixer.music.stop()
-            else:
-                ButtonsOnMain('checked.png', 500, 180)
-                load_the_playlist()
-        elif x <= 62 and y <= 62:
-            sets_working = False
-            start_running = True
-            StartScreen()
-            start_main()
-    elif rules:
+    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, chips, rules, diler_points, player_points
+    global balance, bet
+    if rules:
         if x <= 62 and y <= 62:
             rules = False
             start_running = True
@@ -161,7 +157,10 @@ def click(x, y):
     elif x <= 62 and y <= 62:
         line_group.empty()
         card_group.empty()
-        rules = False
+        diler_points = 0
+        player_points = 0
+        balance += bet
+        bet = 0
         chips = []
         start_running = True
         main.kill()
@@ -173,8 +172,8 @@ def click(x, y):
 
 def write_the_points():
     font = pygame.font.Font(None, 50)
-    text = font.render(str(diler_points), True, (100, 255, 100))
-    text1 = font.render(str(player_points), True, (100, 255, 100))
+    text = font.render(str(diler_points), True, (54, 39, 38))
+    text1 = font.render(str(player_points), True, (54, 39, 38))
     screen.blit(text, (50, 100))
     screen.blit(text1, (50, 600))
 
@@ -182,9 +181,9 @@ def write_the_points():
 def write_bet_and_balance():
     global bet, balance
     font = pygame.font.Font(None, 40)
-    new_bet = font.render(f'{bet}$', True, (100, 225, 100))
+    new_bet = font.render(f'{bet}$', True, (54, 39, 38))
     screen.blit(new_bet, (575, 700))
-    new_balance = font.render(f'{balance}$', True, (100, 225, 100))
+    new_balance = font.render(f'{balance}$', True, (54, 39, 38))
     screen.blit(new_balance, (590, 15))
 
 
