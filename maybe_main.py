@@ -1,5 +1,5 @@
 import pygame
-from random import shuffle
+from random import shuffle, randint
 import os
 import sys
 import time
@@ -7,6 +7,7 @@ import pickle
 
 chips = []
 rules = False
+stats = False
 
 def load_image(name, *folder, color_key=None):
     if folder == ():
@@ -87,8 +88,9 @@ class StartScreen(Sprite):
             button_group.empty()
             Rules()
         elif 700 <= x <= 935 and 450 <= y <= 516:
-            print('loses:', loses)
-            print('я сделаю кнопку там ок для статистики...')
+            start_running = False
+            button_group.empty()
+            Statistics()
         elif 700 <= x <= 750 and 530 <= y <= 580:
             if pygame.mixer.music.get_busy():
                 ButtonsOnMain('no_sound.png', 700, 530)
@@ -130,11 +132,12 @@ class ButtonsOnMain(Sprite):
 
 
 def click(x, y):
-    global lst, WE_PLAY, you_can, main, boms, start_running, sets_working, chips, rules, diler_points, player_points
-    global balance, bet
-    if rules:
+    global lst, WE_PLAY, main, boms, start_running, chips, rules, diler_points, player_points
+    global balance, bet, stats, motion
+    if rules or stats:
         if x <= 62 and y <= 62:
             rules = False
+            stats = False
             start_running = True
             StartScreen()
             start_main()
@@ -157,6 +160,7 @@ def click(x, y):
     elif x <= 62 and y <= 62:
         line_group.empty()
         card_group.empty()
+        WE_PLAY = False
         diler_points = 0
         player_points = 0
         balance += bet
@@ -171,20 +175,32 @@ def click(x, y):
 
 
 def write_the_points():
-    font = pygame.font.Font(None, 50)
-    text = font.render(str(diler_points), True, (54, 39, 38))
-    text1 = font.render(str(player_points), True, (54, 39, 38))
-    screen.blit(text, (50, 100))
-    screen.blit(text1, (50, 600))
+    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
+    text = font.render(str(diler_points), True, COFFEE_COLOUR)
+    text1 = font.render(str(player_points), True, COFFEE_COLOUR)
+    screen.blit(text, (180 - len(str(diler_points) * 23) // 2, 230))
+    screen.blit(text1, (180 - len(str(player_points) * 23) // 2, 510))
 
 
 def write_bet_and_balance():
     global bet, balance
-    font = pygame.font.Font(None, 40)
-    new_bet = font.render(f'{bet}$', True, (54, 39, 38))
-    screen.blit(new_bet, (575, 700))
-    new_balance = font.render(f'{balance}$', True, (54, 39, 38))
-    screen.blit(new_balance, (590, 15))
+    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
+    str1 = f'{bet}$'
+    str2 = f'Баланс: {balance}$'
+    new_bet = font.render(str1, True, COFFEE_COLOUR)
+    screen.blit(new_bet, (620 - (len(str1) * 23) // 2, 686))
+    new_balance = font.render(str2, True, COFFEE_COLOUR)
+    screen.blit(new_balance, (620 - (len(str2) * 23) // 2, 15))
+
+
+def print_stats():
+    words = ['Баланс: ', 'Всего выиграно денег: ', 'Всего проиграно денег: ',
+             '', 'Всего игр: ', 'Выигрышей: ', 'Проигрышей: ', 'Ничьих: ']
+    numbers = [balance, won, lost, '', wins + loses + pushes, wins, loses, pushes]
+    font = pygame.font.Font('ubuntu/Ubuntu-R.ttf', 60)
+    for i in range(8):
+        text = font.render(words[i] + str(numbers[i]), True, COFFEE_COLOUR)
+        screen.blit(text, (120, 100 + 75 * i))
 
 
 def load_the_playlist():
@@ -205,22 +221,24 @@ class Game():
         return counter
 
     def lose(self):
-        global WE_PLAY, bet, loses
+        global WE_PLAY, bet, loses, lost
         image = load_image("you_lose.png")
         line = pygame.sprite.Sprite(line_group)
         line.image = image
         line.rect = line.image.get_rect().move(0, 500)
         WE_PLAY = False
+        lost += bet
         loses += 1
         bet = 0
 
     def win(self):
-        global WE_PLAY, balance, bet, wins
+        global WE_PLAY, balance, bet, wins, won
         image = load_image("you_win.png")
         line = pygame.sprite.Sprite(line_group)
         line.image = image
         line.rect = line.image.get_rect().move(0, 500)
         WE_PLAY = False
+        won += bet
         balance += bet * 2
         wins += 1
         bet = 0
@@ -249,7 +267,7 @@ class Card(Sprite):
         self.rect = self.image.get_rect().move(self.card_back_x, self.card_back_y)
 
     def update(self, *args):
-        global WE_PLAY, player_counter, diler_counter, hit_or_stand, condition, player_cards, diler_cards, can_kill
+        global WE_PLAY, player_counter, diler_counter, hit_or_stand, condition, player_cards, diler_cards
         hit_or_stand = args[0]
         if type(args[-1]) == int:
             condition = args[-1]
@@ -332,21 +350,6 @@ class Card(Sprite):
         bet *= 2
 
 
-class Settings(Sprite):
-    def __init__(self):
-        global sets_working
-        sets_working = True
-        super().__init__(sprite_group)
-        button_group.empty()
-        self.image = load_image('main_pic.png', 'set_pics')
-        self.rect = self.image.get_rect().move(0, 0)
-        ButtonsOnMain('back_btn.png', 0, 0)
-        if pygame.mixer.music.get_busy():
-            ButtonsOnMain('checked.png', 500, 180)
-        else:
-            ButtonsOnMain('non_checked.png', 500, 180)
-
-
 class Rules(Sprite):
     def __init__(self):
         global rules
@@ -354,6 +357,17 @@ class Rules(Sprite):
         super().__init__(sprite_group)
         button_group.empty()
         self.image = load_image('Rules.png', 'set_pics')
+        self.rect = self.image.get_rect().move(0, 0)
+        ButtonsOnMain('back_btn.png', 0, 0)
+
+
+class Statistics(Sprite):
+    def __init__(self):
+        global stats
+        stats = True
+        super().__init__(sprite_group)
+        button_group.empty()
+        self.image = load_image('statistics.png', 'set_pics')
         self.rect = self.image.get_rect().move(0, 0)
         ButtonsOnMain('back_btn.png', 0, 0)
 
@@ -377,12 +391,11 @@ motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
 balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
-wins = loses = pushes = 0
+won = lost = wins = loses = pushes = 0
+COFFEE_COLOUR = (54, 39, 38)
 with open('save.dat', 'rb') as file:
-    balance, wins, loses, pushes = pickle.load(file)
+   balance, won, lost, wins, loses, pushes = pickle.load(file)
 hit_or_stand = None
-can_kill = False
-sets_working = False
 TRANSPARENCY = 0
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
                 [-6, 1]]  # скорости/направления, с которыми дложны двигаться карты, чтобы оказаться там, где надо
@@ -398,7 +411,7 @@ def start_main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 with open('save.dat', 'wb') as file:
-                    pickle.dump([balance, wins, loses, pushes], file)
+                    pickle.dump([balance, won, lost, wins, loses, pushes], file)
                     file.close()
                 running = False
                 start_running = False
@@ -416,15 +429,16 @@ def start_main():
 card_group = pygame.sprite.Group(Card([500, 0]))
 
 def the_mainest():
-    global running, motion, bet, balance, WE_PLAY
+    global running, motion, bet, balance, WE_PLAY, chips
     while running:
+        #print(running, start_running, rules, stats)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 with open('save.dat', 'wb') as file:
-                    pickle.dump([balance, wins, loses, pushes], file)
+                    pickle.dump([balance, won, lost, wins, loses, pushes], file)
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and motion:
-                if 470 <= event.pos[0] <= 750 and 700 <= event.pos[1] <= 780:  # место для ставок
+                if 470 <= event.pos[0] <= 750 and 650 <= event.pos[1] <= 780:  # место для ставок
                     if index == 0 and balance >= 10:
                         bet += 10
                         balance -= 10
@@ -448,7 +462,7 @@ def the_mainest():
                         index = chips.index(chip)  # 0 - 10, 1 - 50, 2 - 100, 3 - 500
                         # номера в списке соответсенно фишкам
                         # узнаем на какую фишку попал игрок
-                        motion = True  # двигаем
+                        motion = True
             if event.type == pygame.MOUSEMOTION and motion and not WE_PLAY:
                 chips[index][3].top += event.rel[1]
                 chips[index][3].left += event.rel[0]
@@ -457,9 +471,11 @@ def the_mainest():
         button_group.draw(screen)
         card_group.draw(screen)
         line_group.draw(screen)
-        if not sets_working and not rules:
+        if not rules and not stats:
             write_the_points()
             write_bet_and_balance()
+        elif stats:
+           print_stats()
         clock.tick(FPS)
         pygame.display.flip()
     pygame.quit()
