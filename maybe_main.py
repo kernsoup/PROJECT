@@ -175,7 +175,7 @@ def click(x, y):
 
 
 def write_the_points():
-    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
+    font = pygame.font.Font('Ubuntu-B.ttf', 40)
     text = font.render(str(diler_points), True, COFFEE_COLOUR)
     text1 = font.render(str(player_points), True, COFFEE_COLOUR)
     screen.blit(text, (180 - len(str(diler_points) * 23) // 2, 230))
@@ -184,7 +184,7 @@ def write_the_points():
 
 def write_bet_and_balance():
     global bet, balance
-    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
+    font = pygame.font.Font('Ubuntu-B.ttf', 40)
     str1 = f'{bet}$'
     str2 = f'Баланс: {balance}$'
     new_bet = font.render(str1, True, COFFEE_COLOUR)
@@ -197,7 +197,7 @@ def print_stats():
     words = ['Баланс: ', 'Всего выиграно денег: ', 'Всего проиграно денег: ',
              '', 'Всего игр: ', 'Выигрышей: ', 'Проигрышей: ', 'Ничьих: ']
     numbers = [balance, won, lost, '', wins + loses + pushes, wins, loses, pushes]
-    font = pygame.font.Font('ubuntu/Ubuntu-R.ttf', 60)
+    font = pygame.font.Font('Ubuntu-R.ttf', 60)
     for i in range(8):
         text = font.render(words[i] + str(numbers[i]), True, COFFEE_COLOUR)
         screen.blit(text, (120, 100 + 75 * i))
