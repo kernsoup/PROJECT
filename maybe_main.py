@@ -72,7 +72,7 @@ class StartScreen(Sprite):
                       ButtonsOnMain('button1.png', 700, 250),
                       ButtonsOnMain('button2.png', 700, 350),
                       ButtonsOnMain('button3.png', 700, 450)]
-        if pygame.mixer.music.get_busy():
+        if pygame.mixer.Channel(0).get_busy():
             start_boms.append(ButtonsOnMain('sound.png', 700, 530))
         else:
             start_boms.append(ButtonsOnMain('no_sound.png', 700, 530))
@@ -92,7 +92,7 @@ class StartScreen(Sprite):
             button_group.empty()
             Statistics()
         elif 700 <= x <= 750 and 530 <= y <= 580:
-            if pygame.mixer.music.get_busy():
+            if pygame.mixer.Channel(0).get_busy():
                 ButtonsOnMain('no_sound.png', 700, 530)
                 pygame.mixer.music.stop()
             else:
@@ -143,7 +143,10 @@ def click(x, y):
             start_main()
     elif 165 <= x <= 284 and 650 <= y <= 769 and not WE_PLAY:
         if bet == 0:
-            print('no <3')
+            image = load_image("make_a_bet.png")
+            line = pygame.sprite.Sprite(line_group)
+            line.image = image
+            line.rect = line.image.get_rect().move(0, 500)
         else:
             line_group.empty()
             card_group.empty()
@@ -175,16 +178,16 @@ def click(x, y):
 
 
 def write_the_points():
-    font = pygame.font.Font('Ubuntu-B.ttf', 40)
+    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
     text = font.render(str(diler_points), True, COFFEE_COLOUR)
     text1 = font.render(str(player_points), True, COFFEE_COLOUR)
-    screen.blit(text, (180 - len(str(diler_points) * 23) // 2, 230))
-    screen.blit(text1, (180 - len(str(player_points) * 23) // 2, 510))
+    screen.blit(text, (180 - len(str(diler_points) * 23) // 2, 180))
+    screen.blit(text1, (180 - len(str(player_points) * 23) // 2, 395))
 
 
 def write_bet_and_balance():
     global bet, balance
-    font = pygame.font.Font('Ubuntu-B.ttf', 40)
+    font = pygame.font.Font('ubuntu/Ubuntu-B.ttf', 40)
     str1 = f'{bet}$'
     str2 = f'Баланс: {balance}$'
     new_bet = font.render(str1, True, COFFEE_COLOUR)
@@ -197,17 +200,17 @@ def print_stats():
     words = ['Баланс: ', 'Всего выиграно денег: ', 'Всего проиграно денег: ',
              '', 'Всего игр: ', 'Выигрышей: ', 'Проигрышей: ', 'Ничьих: ']
     numbers = [balance, won, lost, '', wins + loses + pushes, wins, loses, pushes]
-    font = pygame.font.Font('Ubuntu-R.ttf', 60)
+    font = pygame.font.Font('ubuntu/Ubuntu-R.ttf', 60)
     for i in range(8):
         text = font.render(words[i] + str(numbers[i]), True, COFFEE_COLOUR)
         screen.blit(text, (120, 100 + 75 * i))
 
 
 def load_the_playlist():
-    pygame.mixer.music.load('bj_music/at.mp3')
-    pygame.mixer.music.play()
-    for elem in os.listdir('bj_music')[1:]:
-        pygame.mixer.music.queue('bj_music/' + elem)
+    pygame.mixer.Channel(0).set_volume(0.3)
+    for elem in os.listdir('bj_music'):
+        sound = pygame.mixer.Sound('bj_music/' + elem)
+        pygame.mixer.Channel(0).queue(sound)
 
 
 class Game():
@@ -222,10 +225,7 @@ class Game():
 
     def lose(self):
         global WE_PLAY, bet, loses, lost
-        image = load_image("you_lose.png")
-        line = pygame.sprite.Sprite(line_group)
-        line.image = image
-        line.rect = line.image.get_rect().move(0, 500)
+        self.results('you_lose.png', 'fail.mp3')
         WE_PLAY = False
         lost += bet
         loses += 1
@@ -233,10 +233,7 @@ class Game():
 
     def win(self):
         global WE_PLAY, balance, bet, wins, won
-        image = load_image("you_win.png")
-        line = pygame.sprite.Sprite(line_group)
-        line.image = image
-        line.rect = line.image.get_rect().move(0, 500)
+        self.results('you_win.png', 'applause.mp3')
         WE_PLAY = False
         won += bet
         balance += bet * 2
@@ -245,15 +242,19 @@ class Game():
 
     def push(self):
         global WE_PLAY, balance, bet, pushes
-        image = load_image("push.png")
-        line = pygame.sprite.Sprite(line_group)
-        line.image = image
-        line.rect = line.image.get_rect().move(0, 500)
+        self.results('push.png', 'fine.mp3')
         WE_PLAY = False
         balance += bet
         pushes += 1
         bet = 0
 
+    def results(self, pic, sound):
+        image = load_image(pic)
+        line = pygame.sprite.Sprite(line_group)
+        line.image = image
+        line.rect = line.image.get_rect().move(0, 500)
+        if pygame.mixer.Channel(0).get_busy():
+            pygame.mixer.Channel(1).play(pygame.mixer.Sound('some sounds/' + sound))
 
 class Card(Sprite):
     def __init__(self, speed):
@@ -403,7 +404,6 @@ player_speeds = [(-10, 6), [-10, 7], [-12, 10], [-12, 12], [-10, 12], [-7, 10], 
        # вообще скоростей надо больше, но очень редко нужно больше чем 7. так что надеюсь, out of range'a не случится :)
 game = Game()
 StartScreen()
-#load_the_playlist()
 
 def start_main():
     global start_running, running, TRANSPARENCY, start_boms
