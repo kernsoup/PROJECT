@@ -1,5 +1,5 @@
 import pygame
-from random import shuffle
+from random import shuffle, randint
 import os
 import sys
 import pickle
@@ -7,6 +7,8 @@ import pickle
 chips = []
 rules = False
 stats = False
+playlist = []
+music = False
 
 def load_image(name, *folder, color_key=None):
     if folder == ():
@@ -77,7 +79,7 @@ class StartScreen(Sprite):
             start_boms.append(ButtonsOnMain('no_sound.png', 700, 530))
 
     def click(x, y):
-        global start_running, main, manual
+        global start_running, main, manual, music
         if 700 <= x <= 878 and 250 <= y <= 316:
             start_running = False
             button_group.empty()
@@ -94,9 +96,11 @@ class StartScreen(Sprite):
             if pygame.mixer.Channel(0).get_busy():
                 ButtonsOnMain('no_sound.png', 700, 530)
                 pygame.mixer.Channel(0).stop()
+                music = False
             else:
                 ButtonsOnMain('sound.png', 700, 530)
                 load_the_playlist()
+                music = True
 
 
 class Main(Sprite):
@@ -218,7 +222,7 @@ def load_the_playlist():
     pygame.mixer.Channel(0).play(pygame.mixer.Sound(name1))
     for elem in os.listdir('bj_music')[1:]:
         sound = pygame.mixer.Sound('bj_music/' + elem)
-        pygame.mixer.Channel(0).queue(sound)
+        playlist.append(sound)
 
 
 class Game():
@@ -399,13 +403,10 @@ definding_all_the_stuff()
 motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
+balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
 COFFEE_COLOUR = (54, 39, 38)
-try:
-   with open('save.dat', 'rb') as file:
-       balance, won, lost, wins, loses, pushes = pickle.load(file)
-except:
-    balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
-    won = lost = wins = loses = pushes = 0
+with open('save.dat', 'rb') as file:
+    balance, won, lost, wins, loses, pushes = pickle.load(file)
 hit_or_stand = None
 TRANSPARENCY = 0
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
@@ -481,6 +482,8 @@ def the_mainest():
         button_group.draw(screen)
         card_group.draw(screen)
         line_group.draw(screen)
+        if music and not pygame.mixer.Channel(0).get_busy():
+            pygame.mixer.Channel(0).queue(playlist[randint(0, 4)])
         if not rules and not stats:
             write_the_points()
             write_bet_and_balance()
