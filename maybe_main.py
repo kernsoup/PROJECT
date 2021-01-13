@@ -403,10 +403,13 @@ definding_all_the_stuff()
 motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
-balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
 COFFEE_COLOUR = (54, 39, 38)
-with open('save.dat', 'rb') as file:
-    balance, won, lost, wins, loses, pushes = pickle.load(file)
+try:
+   with open('save.dat', 'rb') as file:
+       balance, won, lost, wins, loses, pushes = pickle.load(file)
+except:
+    balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
+    won = lost = wins = loses = pushes = 0
 hit_or_stand = None
 TRANSPARENCY = 0
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
@@ -483,7 +486,7 @@ def the_mainest():
         card_group.draw(screen)
         line_group.draw(screen)
         if music and not pygame.mixer.Channel(0).get_busy():
-            pygame.mixer.Channel(0).queue(playlist[randint(0, 4)])
+            pygame.mixer.Channel(0).play(playlist[randint(0, 4)])
         if not rules and not stats:
             write_the_points()
             write_bet_and_balance()
