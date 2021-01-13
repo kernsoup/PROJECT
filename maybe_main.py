@@ -1,8 +1,7 @@
 import pygame
-from random import shuffle, randint
+from random import shuffle
 import os
 import sys
-import time
 import pickle
 
 chips = []
@@ -94,7 +93,7 @@ class StartScreen(Sprite):
         elif 700 <= x <= 750 and 530 <= y <= 580:
             if pygame.mixer.Channel(0).get_busy():
                 ButtonsOnMain('no_sound.png', 700, 530)
-                pygame.mixer.music.stop()
+                pygame.mixer.Channel(0).stop()
             else:
                 ButtonsOnMain('sound.png', 700, 530)
                 load_the_playlist()
@@ -102,7 +101,7 @@ class StartScreen(Sprite):
 
 class Main(Sprite):
     def __init__(self, x, y):
-        global boms
+        global boms, balance
         super().__init__(sprite_group)
         self.image = load_image('main_pic.png')
         self.rect = self.image.get_rect().move(x, y)
@@ -116,6 +115,12 @@ class Main(Sprite):
                 ButtonsOnMain('hit_btn.png', 790, 675),
                 ButtonsOnMain('stand_btn.png', 950, 650),
                 ButtonsOnMain('Double.png', 325, 675)]
+        if balance < 10:
+            img = load_image('no_money.png')
+            nmn = pygame.sprite.Sprite(line_group)
+            nmn.image = img
+            nmn.rect = nmn.image.get_rect().move(200, 50)
+            balance += 100
 
 
 class ButtonsOnMain(Sprite):
@@ -146,7 +151,7 @@ def click(x, y):
             image = load_image("make_a_bet.png")
             line = pygame.sprite.Sprite(line_group)
             line.image = image
-            line.rect = line.image.get_rect().move(0, 500)
+            line.rect = line.image.get_rect().move(0, 550)
         else:
             line_group.empty()
             card_group.empty()
@@ -163,6 +168,7 @@ def click(x, y):
     elif x <= 62 and y <= 62:
         line_group.empty()
         card_group.empty()
+        pygame.mixer.Channel(1).stop()
         WE_PLAY = False
         diler_points = 0
         player_points = 0
@@ -182,7 +188,7 @@ def write_the_points():
     text = font.render(str(diler_points), True, COFFEE_COLOUR)
     text1 = font.render(str(player_points), True, COFFEE_COLOUR)
     screen.blit(text, (180 - len(str(diler_points) * 23) // 2, 180))
-    screen.blit(text1, (180 - len(str(player_points) * 23) // 2, 395))
+    screen.blit(text1, (180 - len(str(player_points) * 23) // 2, 473))
 
 
 def write_bet_and_balance():
@@ -208,7 +214,9 @@ def print_stats():
 
 def load_the_playlist():
     pygame.mixer.Channel(0).set_volume(0.3)
-    for elem in os.listdir('bj_music'):
+    name1 = 'bj_music/' + os.listdir('bj_music')[0]
+    pygame.mixer.Channel(0).play(pygame.mixer.Sound(name1))
+    for elem in os.listdir('bj_music')[1:]:
         sound = pygame.mixer.Sound('bj_music/' + elem)
         pygame.mixer.Channel(0).queue(sound)
 
@@ -252,7 +260,7 @@ class Game():
         image = load_image(pic)
         line = pygame.sprite.Sprite(line_group)
         line.image = image
-        line.rect = line.image.get_rect().move(0, 500)
+        line.rect = line.image.get_rect().move(0, 550)
         if pygame.mixer.Channel(0).get_busy():
             pygame.mixer.Channel(1).play(pygame.mixer.Sound('some sounds/' + sound))
 
@@ -290,6 +298,10 @@ class Card(Sprite):
         elif hit_or_stand == False and condition < self.rect.left < condition + 30 and self.rect.top < 200:
             hit_or_stand = None
             self.change(diler_cards)
+        if self.speed[0] == 0 and 102 < self.rect.top < 200:
+            self.rect = self.rect.move(0, - (self.rect.top - 144))
+        if self.speed[0] == 0 and self.rect.top > 400:
+            self.rect = self.rect.move(0, - (self.rect.top - 402))
 
 
     def change(self, cards_list):
@@ -316,7 +328,7 @@ class Card(Sprite):
                 game.win()
             elif diler_points < 17 and self.stand_pressed:
                 Card(diler_speeds[diler_counter + 1]).stand()
-            elif 17 <= diler_points <= 21 and 17 <= player_points <= 21:
+            elif 17 <= diler_points <= 21:
                 if diler_points < player_points:
                     self.end = True
                     game.win()
@@ -326,10 +338,6 @@ class Card(Sprite):
                 else:
                     self.end = True
                     game.push()
-        if self.rect.left == 685:
-            self.pic_rect = self.image.get_rect().move(self.rect.left + 10, self.rect.top)
-        else:
-            self.pic_rect = self.image.get_rect().move(self.rect.left, self.rect.top)
         COUNTER += 1
 
     def hit(self):
@@ -406,15 +414,16 @@ game = Game()
 StartScreen()
 
 def start_main():
-    global start_running, running, TRANSPARENCY, start_boms
+    global start_running, running, TRANSPARENCY, start_boms, rules
     while start_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                running = False
+                start_running = False
+                rules = True
                 with open('save.dat', 'wb') as file:
                     pickle.dump([balance, won, lost, wins, loses, pushes], file)
                     file.close()
-                running = False
-                start_running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 StartScreen.click(*event.pos)
         if TRANSPARENCY < 255:
@@ -431,7 +440,6 @@ card_group = pygame.sprite.Group(Card([500, 0]))
 def the_mainest():
     global running, motion, bet, balance, WE_PLAY, chips
     while running:
-        #print(running, start_running, rules, stats)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 with open('save.dat', 'wb') as file:
