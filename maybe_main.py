@@ -399,11 +399,13 @@ definding_all_the_stuff()
 motion = False  # показатель движения фишки
 index = None  # номер фишки
 bet = 0  # ставка игрока
-balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
-won = lost = wins = loses = pushes = 0
 COFFEE_COLOUR = (54, 39, 38)
-with open('save.dat', 'rb') as file:
-   balance, won, lost, wins, loses, pushes = pickle.load(file)
+try:
+   with open('save.dat', 'rb') as file:
+       balance, won, lost, wins, loses, pushes = pickle.load(file)
+except:
+    balance = 750  # СТАРТОВЫЙ БАЛАНС!!!
+    won = lost = wins = loses = pushes = 0
 hit_or_stand = None
 TRANSPARENCY = 0
 diler_speeds = [[-12, 1], [-10, 1], [-9, 1], [-8, 1], [-7, 1],
